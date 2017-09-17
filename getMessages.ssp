@@ -1,0 +1,18 @@
+<%
+import Foundation
+import MongoKitten
+
+// Connect to the database
+let myDatabase = try MongoKitten.Database("mongodb://swapnil_jain:Apple123@ds139844.mlab.com:39844/messaging_board")
+
+// Choose Messages Collection
+let myCollection = myDatabase["messages"]
+
+Request.addHandler(forMethod: "GET",  withRoute: "/:resource/:topic"){
+	(routeParams:RouteParams) in
+	let topic = routeParams["topic"] as! String
+	for document in try! myCollection.find("topic" == topic.lowercased()) {
+        Response.write("\(document.dictionaryRepresentation as! [String:String])")
+    }
+}
+%>

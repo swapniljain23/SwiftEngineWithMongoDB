@@ -1,0 +1,40 @@
+<%
+import Foundation
+import MongoKitten
+
+// Connect to the database
+let myDatabase = try MongoKitten.Database("mongodb://swapnil_jain:Apple123@ds139844.mlab.com:39844/messaging_board")
+
+// Choose Messages Collection
+let myCollection = myDatabase["messages"]
+
+// Add handler
+Request.addHandler(forMethod: "POST", withRoute: "*"){
+	(routeParams:RouteParams) in
+	// Get post body
+	let jsonString = Request.server["RAW_POST_DATA"]!
+	
+	// Convert into BSON document
+	var document = try! Document(extendedJSON: jsonString)!
+	
+	// Set id, unique identifier
+	document["_id"] = UUID().uuidString
+	
+	// Store topic in lower case
+	let topic = document["topic"] as! String
+	document["topic"] = topic.lowercased()
+	
+	// Insert into MongoDB database
+	try! myCollection.insert(document)
+	
+	// Send email
+	let email = document["email"] as! String
+	
+    var headers = "Cc: swapnil23@live.com" + "\r\n" + 
+    "X-Mailer: SwiftEngine";
+    Mail.send(to: email, from: "noreply@swiftengine.net", subject: "Message added to topic: \(topic)", message: "This is a Notification Message", additionalHeaders: headers)
+	
+	// Response
+	Response.json(document.dictionaryRepresentation as! [String:String])
+}
+%>
